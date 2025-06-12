@@ -4,7 +4,16 @@ function mostrarJogo(jogo) {
 
   switch (jogo) {
     case 'snake':
-      // Código do Jogo da Cobrinha
+      case 'snake':
+  container.innerHTML = `
+    <h3>🐍 Jogo da Cobrinha</h3>
+    <canvas id="snakeCanvas" width="400" height="400"></canvas>
+    <p>Pontuação: <span id="score">0</span></p>
+  `;
+
+  iniciarCobrinha();
+  break;
+
       break;
     case 'velha':
       // Código do Jogo da Velha
