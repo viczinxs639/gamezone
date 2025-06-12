@@ -25,8 +25,26 @@ function mostrarJogo(jogo) {
   break;
 
   `;
-  iniciarCobrinha();
-  break;
+  function iniciarCobrinha() {
+  clearInterval(snakeGameInterval);
+
+  const canvas = document.getElementById("snakeCanvas");
+  const ctx = canvas.getContext("2d");
+
+  const box = 20;
+  const canvasSize = 400;
+  let score = 0;
+  document.getElementById("score").textContent = score;
+
+  const corPrincipal = document.getElementById("snakeColor")?.value || "#00ff88";
+  const dificuldade = parseInt(document.getElementById("dificuldade")?.value || "100");
+
+  let snake = [
+    { x: 9 * box, y: 10 * box },
+    { x: 8 * box, y: 10 * box },
+    { x: 7 * box, y: 10 * box }
+  ];
+
 
   `;
   iniciarCobrinha();
