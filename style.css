@@ -1,0 +1,46 @@
+body {
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+  background-color: #111;
+  color: #eee;
+}
+
+header {
+  background-color: #1a1a1a;
+  padding: 20px;
+  text-align: center;
+}
+
+header h1 {
+  margin: 0;
+}
+
+nav a {
+  margin: 0 15px;
+  text-decoration: none;
+  color: #0af;
+}
+
+nav a:hover {
+  text-decoration: underline;
+}
+
+section {
+  padding: 40px 20px;
+  border-bottom: 1px solid #333;
+}
+
+.jogo {
+  margin-bottom: 20px;
+  background: #222;
+  padding: 15px;
+  border-radius: 8px;
+}
+
+footer {
+  background-color: #1a1a1a;
+  text-align: center;
+  padding: 10px;
+  font-size: 14px;
+}
