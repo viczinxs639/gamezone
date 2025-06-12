@@ -2,9 +2,9 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GameZone</title>
+  <title>GameZone Interativo</title>
   <link rel="stylesheet" href="style.css">
+  <script defer src="script.js"></script>
 </head>
 <body>
   <header>
@@ -12,44 +12,32 @@
     <nav>
       <a href="#inicio">Início</a>
       <a href="#jogos">Jogos</a>
-      <a href="#sobre">Sobre</a>
       <a href="#contato">Contato</a>
     </nav>
   </header>
 
   <section id="inicio">
     <h2>Bem-vindo ao GameZone</h2>
-    <p>Seu portal para os melhores jogos online e novidades do mundo gamer!</p>
+    <p>Jogue e divirta-se com jogos simples e interativos!</p>
   </section>
 
   <section id="jogos">
-    <h2>Jogos em Destaque</h2>
-    <div class="jogo">
-      <h3>Call of Duty</h3>
-      <p>Um clássico de tiro em primeira pessoa!</p>
-    </div>
-    <div class="jogo">
-      <h3>FIFA 25</h3>
-      <p>O jogo de futebol mais jogado do mundo.</p>
-    </div>
-    <div class="jogo">
-      <h3>Fortnite</h3>
-      <p>Batalha real com construção e diversão!</p>
-    </div>
-  </section>
+    <h2>Escolha um Jogo</h2>
+    <button onclick="mostrarJogo('adivinha')">🔢 Adivinhe o Número</button>
+    <button onclick="mostrarJogo('velha')">❌ Jogo da Velha</button>
 
-  <section id="sobre">
-    <h2>Sobre o GameZone</h2>
-    <p>Somos uma comunidade apaixonada por jogos, trazendo notícias, análises e mais!</p>
-  </section>
+    <div id="jogo-adivinha" class="jogo">
+      <h3>🔢 Adivinhe o Número</h3>
+      <p>Escolha um número entre 1 e 10:</p>
+      <input type="number" id="entrada-numero" min="1" max="10">
+      <button onclick="adivinharNumero()">Tentar</button>
+      <p id="resultado-adivinha"></p>
+    </div>
 
-  <section id="contato">
-    <h2>Contato</h2>
-    <p>Email: contato@gamezone.com</p>
-  </section>
-
-  <footer>
-    <p>© 2025 GameZone. Todos os direitos reservados.</p>
-  </footer>
-</body>
-</html>
+    <div id="jogo-velha" class="jogo" style="display: none;">
+      <h3>❌ Jogo da Velha</h3>
+      <div class="tabuleiro" id="tabuleiro">
+        <!-- O JS vai preencher isso -->
+      </div>
+      <p id="status-velha"></p>
+      <button oncl
