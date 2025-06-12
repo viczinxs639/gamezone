@@ -4,11 +4,15 @@ function mostrarJogo(jogo) {
 
   switch (jogo) {
     case 'snake':
-      case 'snake':
   container.innerHTML = `
     <h3>🐍 Jogo da Cobrinha</h3>
     <canvas id="snakeCanvas" width="400" height="400"></canvas>
     <p>Pontuação: <span id="score">0</span></p>
+    <button onclick="iniciarCobrinha()">🔄 Reiniciar</button>
+  `;
+  iniciarCobrinha();
+  break;
+
   `;
   iniciarCobrinha();
   break;
