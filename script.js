@@ -74,6 +74,11 @@ function iniciarCobrinha() {
 function iniciarCobrinha() {
   clearInterval(snakeGameInterval);
 
+let snakeGameInterval; // intervalo global para reset
+
+function iniciarCobrinha() {
+  clearInterval(snakeGameInterval); // limpa jogo anterior
+
   const canvas = document.getElementById("snakeCanvas");
   const ctx = canvas.getContext("2d");
 
@@ -101,6 +106,61 @@ function iniciarCobrinha() {
     else if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
     else if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
   };
+
+  function collision(x, y, array) {
+    return array.some(segment => segment.x === x && segment.y === y);
+  }
+
+  function draw() {
+    ctx.clearRect(0, 0, canvasSize, canvasSize);
+
+    // desenha cobrinha colorida
+    for (let i = 0; i < snake.length; i++) {
+      ctx.fillStyle = `hsl(${(i * 30) % 360}, 100%, 50%)`;
+      ctx.fillRect(snake[i].x, snake[i].y, box, box);
+    }
+
+    // desenha comida
+    ctx.fillStyle = "red";
+    ctx.fillRect(food.x, food.y, box, box);
+
+    let headX = snake[0].x;
+    let headY = snake[0].y;
+
+    if (direction === "LEFT") headX -= box;
+    if (direction === "RIGHT") headX += box;
+    if (direction === "UP") headY -= box;
+    if (direction === "DOWN") headY += box;
+
+    // colisão com bordas e corpo
+    if (
+      headX < 0 || headX >= canvasSize ||
+      headY < 0 || headY >= canvasSize ||
+      collision(headX, headY, snake)
+    ) {
+      clearInterval(snakeGameInterval);
+      alert("☠️ Game Over! Pontuação: " + score);
+      return;
+    }
+
+    if (headX === food.x && headY === food.y) {
+      score++;
+      document.getElementById("score").textContent = score;
+      food = {
+        x: Math.floor(Math.random() * (canvasSize / box)) * box,
+        y: Math.floor(Math.random() * (canvasSize / box)) * box,
+      };
+    } else {
+      snake.pop();
+    }
+
+    const newHead = { x: headX, y: headY };
+    snake.unshift(newHead);
+  }
+
+  snakeGameInterval = setInterval(draw, 100);
+}
+
 
   function salvarRanking(pontuacao) {
   const ranking = JSON.parse(localStorage.getItem("rankingSnake")) || [];
