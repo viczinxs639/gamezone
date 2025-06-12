@@ -1,0 +1,14 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8">
+  <title>🐍 Jogo da Cobrinha</title>
+  <link rel="stylesheet" href="style.css">
+  <script defer src="script.js"></script>
+</head>
+<body>
+  <h1>🐍 Jogo da Cobrinha</h1>
+  <canvas id="game" width="400" height="400"></canvas>
+  <p>Pontuação: <span id="score">0</span></p>
+</body>
+</html>
