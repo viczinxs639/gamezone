@@ -94,3 +94,27 @@ function iniciarCobrinha() {
     else if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
     else if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
   };
+
+  function salvarRanking(pontuacao) {
+  const ranking = JSON.parse(localStorage.getItem("rankingSnake")) || [];
+  const nome = prompt("👤 Digite seu nome para o ranking:");
+  if (!nome) return;
+
+  ranking.push({ nome, pontuacao });
+  ranking.sort((a, b) => b.pontuacao - a.pontuacao);
+  if (ranking.length > 5) ranking.length = 5;
+
+  localStorage.setItem("rankingSnake", JSON.stringify(ranking));
+}
+
+function mostrarRanking() {
+  const container = document.getElementById("jogo-container");
+  const ranking = JSON.parse(localStorage.getItem("rankingSnake")) || [];
+
+  let html = `<h3>🏆 Ranking dos Jogadores</h3><ol>`;
+  ranking.forEach(jogador => {
+    html += `<li>${jogador.nome} - ${jogador.pontuacao} pts</li>`;
+  });
+  html += `</ol>`;
+  container.innerHTML += html;
+}
