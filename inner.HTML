@@ -1,0 +1,41 @@
+function mostrarJogo(jogo) {
+  const container = document.getElementById('jogo-container');
+  container.innerHTML = ''; // Limpa o conteúdo atual
+
+  switch (jogo) {
+    case 'snake':
+      container.innerHTML = `
+        <h3>🐍 Jogo da Cobrinha</h3>
+        <canvas id="snakeCanvas" width="400" height="400"></canvas>
+        <script>
+          // Código do Jogo da Cobrinha
+        </script>
+      `;
+      break;
+    case 'velha':
+      container.innerHTML = `
+        <h3>❌ Jogo da Velha</h3>
+        <div id="tabuleiro">
+          <!-- Tabuleiro do Jogo da Velha -->
+        </div>
+        <script>
+          // Código do Jogo da Velha
+        </script>
+      `;
+      break;
+    case 'adivinha':
+      container.innerHTML = `
+        <h3>🔢 Jogo da Adivinhação</h3>
+        <input type="number" id="numero" min="1" max="100">
+        <button onclick="adivinhar()">Adivinhar</button>
+        <p id="resultado"></p>
+        <script>
+          // Código do Jogo da Adivinhação
+        </script>
+      `;
+      break;
+    // Adicione os outros jogos aqui
+    default:
+      container.innerHTML = '<p>Jogo não encontrado.</p>';
+  }
+}
