@@ -3,12 +3,20 @@ function mostrarJogo(jogo) {
   container.innerHTML = ''; // Limpa o container
 
   switch (jogo) {
-    case 'snake':
+  case 'snake':
   container.innerHTML = `
     <h3>🐍 Jogo da Cobrinha</h3>
     <canvas id="snakeCanvas" width="400" height="400"></canvas>
     <p>Pontuação: <span id="score">0</span></p>
-    <button onclick="iniciarCobrinha()">🔄 Reiniciar</button>
+    <button id="resetSnake">🔄 Reiniciar</button>
+  `;
+
+  setTimeout(() => {
+    document.getElementById("resetSnake").addEventListener("click", iniciarCobrinha);
+    iniciarCobrinha();
+  }, 100);
+  break;
+
   `;
   iniciarCobrinha();
   break;
