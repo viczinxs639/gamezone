@@ -2,7 +2,8 @@
 <html lang="pt-br">
 <head>
   <meta charset="UTF-8">
-  <title>GameZone Interativo</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>GameZone - Jogos Interativos</title>
   <link rel="stylesheet" href="style.css">
   <script defer src="script.js"></script>
 </head>
@@ -18,26 +19,33 @@
 
   <section id="inicio">
     <h2>Bem-vindo ao GameZone</h2>
-    <p>Jogue e divirta-se com jogos simples e interativos!</p>
+    <p>Explore nossos jogos interativos e divirta-se!</p>
   </section>
 
   <section id="jogos">
     <h2>Escolha um Jogo</h2>
-    <button onclick="mostrarJogo('adivinha')">🔢 Adivinhe o Número</button>
+    <button onclick="mostrarJogo('snake')">🐍 Jogo da Cobrinha</button>
     <button onclick="mostrarJogo('velha')">❌ Jogo da Velha</button>
+    <button onclick="mostrarJogo('adivinha')">🔢 Adivinhação</button>
+    <button onclick="mostrarJogo('memoria')">🧠 Jogo da Memória</button>
+    <button onclick="mostrarJogo('forca')">⚡ Forca</button>
+    <button onclick="mostrarJogo('whack')">🔨 Whack-a-Mole</button>
+    <button onclick="mostrarJogo('pong')">🏓 Pong</button>
+    <button onclick="mostrarJogo('flappy')">🐦 Flappy Bird</button>
+    <button onclick="mostrarJogo('breakout')">🧱 Breakout</button>
+    <button onclick="mostrarJogo('pedrapapel')">🪨📄✂️ Pedra, Papel, Tesoura</button>
 
-    <div id="jogo-adivinha" class="jogo">
-      <h3>🔢 Adivinhe o Número</h3>
-      <p>Escolha um número entre 1 e 10:</p>
-      <input type="number" id="entrada-numero" min="1" max="10">
-      <button onclick="adivinharNumero()">Tentar</button>
-      <p id="resultado-adivinha"></p>
-    </div>
+    <!-- Cada jogo será inserido aqui -->
+    <div id="jogo-container"></div>
+  </section>
 
-    <div id="jogo-velha" class="jogo" style="display: none;">
-      <h3>❌ Jogo da Velha</h3>
-      <div class="tabuleiro" id="tabuleiro">
-        <!-- O JS vai preencher isso -->
-      </div>
-      <p id="status-velha"></p>
-      <button oncl
+  <section id="contato">
+    <h2>Contato</h2>
+    <p>Email: contato@gamezone.com</p>
+  </section>
+
+  <footer>
+    <p>© 2025 GameZone. Todos os direitos reservados.</p>
+  </footer>
+</body>
+</html>
