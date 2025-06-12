@@ -9,7 +9,14 @@ function mostrarJogo(jogo) {
     <canvas id="snakeCanvas" width="400" height="400"></canvas>
     <p>Pontuação: <span id="score">0</span></p>
     <button id="resetSnake">🔄 Reiniciar</button>
+    <div id="ranking"></div>
   `;
+  setTimeout(() => {
+    document.getElementById("resetSnake").addEventListener("click", iniciarCobrinha);
+    iniciarCobrinha();
+  }, 100);
+  break;
+
 
   setTimeout(() => {
     document.getElementById("resetSnake").addEventListener("click", iniciarCobrinha);
