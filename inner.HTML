@@ -4,13 +4,30 @@ function mostrarJogo(jogo) {
 
   switch (jogo) {
     case 'snake':
-      container.innerHTML = `
-        <h3>🐍 Jogo da Cobrinha</h3>
-        <canvas id="snakeCanvas" width="400" height="400"></canvas>
-        <script>
-          // Código do Jogo da Cobrinha
-          </script>
-      `;
+  container.innerHTML = `
+    <h3>🐍 Jogo da Cobrinha</h3>
+    <label>🎨 Cor da Cobrinha: 
+      <input type="color" id="snakeColor" value="#00ff88">
+    </label>
+    <label>🎮 Dificuldade:
+      <select id="dificuldade">
+        <option value="150">Fácil</option>
+        <option value="100" selected>Médio</option>
+        <option value="60">Difícil</option>
+      </select>
+    </label>
+    <br/><br/>
+    <canvas id="snakeCanvas" width="400" height="400"></canvas>
+    <p>Pontuação: <span id="score">0</span></p>
+    <button id="resetSnake">🔄 Reiniciar</button>
+    <div id="ranking"></div>
+  `;
+  setTimeout(() => {
+    document.getElementById("resetSnake").addEventListener("click", iniciarCobrinha);
+    iniciarCobrinha();
+  }, 100);
+  break;
+ 
       break;
     case 'velha':
       container.innerHTML = `
