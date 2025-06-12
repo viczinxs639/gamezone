@@ -51,15 +51,24 @@ function mostrarJogo(jogo) {
   }
 }
 
+let game; // variável global para o intervalo
+
 function iniciarCobrinha() {
+  clearInterval(game); // interrompe o jogo anterior
+
   const canvas = document.getElementById("snakeCanvas");
   const ctx = canvas.getContext("2d");
 
   const box = 20;
   const canvasSize = 400;
   let score = 0;
+  document.getElementById("score").textContent = score;
 
-  let snake = [{ x: 9 * box, y: 10 * box }];
+  let snake = [
+    { x: 9 * box, y: 10 * box },
+    { x: 8 * box, y: 10 * box },
+    { x: 7 * box, y: 10 * box }
+  ];
   let direction = "RIGHT";
 
   let food = {
@@ -67,14 +76,12 @@ function iniciarCobrinha() {
     y: Math.floor(Math.random() * (canvasSize / box)) * box,
   };
 
-  document.addEventListener("keydown", changeDirection);
-
-  function changeDirection(event) {
+  document.onkeydown = function (event) {
     if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
     else if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
     else if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
     else if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
-  }
+  };
 
   function collision(x, y, array) {
     return array.some(segment => segment.x === x && segment.y === y);
@@ -83,14 +90,17 @@ function iniciarCobrinha() {
   function draw() {
     ctx.clearRect(0, 0, canvasSize, canvasSize);
 
+    // desenha a cobrinha colorida
     for (let i = 0; i < snake.length; i++) {
-      ctx.fillStyle = i === 0 ? "#0f0" : "#fff";
+      ctx.fillStyle = `hsl(${(i * 30) % 360}, 100%, 50%)`;
       ctx.fillRect(snake[i].x, snake[i].y, box, box);
     }
 
+    // comida
     ctx.fillStyle = "red";
     ctx.fillRect(food.x, food.y, box, box);
 
+    // mover cabeça
     let headX = snake[0].x;
     let headY = snake[0].y;
 
@@ -99,8 +109,10 @@ function iniciarCobrinha() {
     if (direction === "UP") headY -= box;
     if (direction === "DOWN") headY += box;
 
+    // colisão com parede
     if (
-      headX < 0 || headX >= canvasSize || headY < 0 || headY >= canvasSize ||
+      headX < 0 || headX >= canvasSize ||
+      headY < 0 || headY >= canvasSize ||
       collision(headX, headY, snake)
     ) {
       clearInterval(game);
@@ -108,6 +120,7 @@ function iniciarCobrinha() {
       return;
     }
 
+    // comer comida
     if (headX === food.x && headY === food.y) {
       score++;
       document.getElementById("score").textContent = score;
@@ -116,13 +129,13 @@ function iniciarCobrinha() {
         y: Math.floor(Math.random() * (canvasSize / box)) * box,
       };
     } else {
-      snake.pop();
+      snake.pop(); // remove a cauda
     }
 
+    // nova cabeça
     const newHead = { x: headX, y: headY };
     snake.unshift(newHead);
   }
 
-  const game = setInterval(draw, 100);
+  game = setInterval(draw, 100);
 }
-
