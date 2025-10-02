@@ -1,51 +1,60 @@
 <!DOCTYPE html>
-<html lang="pt-br">
+<html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>GameZone - Jogos Interativos</title>
-  <link rel="stylesheet" href="style.css">
-  <script defer src="script.js"></script>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <meta name="description" content="Play Buriti: Jogue Snake, Pong, Memória e Tetris! Site desenvolvido por Victor Gabriel na Escola Estadual São José do Buriti." />
+  <title>Play Buriti - Jogos Divertidos</title>
+  <link rel="stylesheet" href="style.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap" rel="stylesheet">
 </head>
 <body>
-  <header>
-    <h1>🎮 GameZone</h1>
-    <nav>
-      <a href="#inicio">Início</a>
-      <a href="#jogos">Jogos</a>
-      <a href="#contato">Contato</a>
-    </nav>
-  </header>
+  <main>
+    <!-- Tela Inicial -->
+    <section id="telaInicial" class="tela-inicial">
+      <h1>Play Buriti</h1>
+      <p>Site desenvolvido por Victor Gabriel<br />Escola Estadual São José do Buriti</p>
+      <button id="btnEntrar" class="btn" aria-label="Entrar nos jogos">Entrar nos Jogos</button>
+    </section>
 
-  <section id="inicio">
-    <h2>Bem-vindo ao GameZone</h2>
-    <p>Explore nossos jogos interativos e divirta-se!</p>
-  </section>
+    <!-- Tela de Seleção de Jogos -->
+    <section id="telaJogos" class="tela-jogos" style="display: none;">
+      <button id="btnVoltar" class="btn" aria-label="Voltar para a tela inicial">Voltar</button>
+      <h2>Escolha um jogo:</h2>
+      <div class="botoes-jogos">
+        <button class="btn jogo-btn" onclick="iniciarJogo('snake')" aria-label="Jogar Snake">Snake</button>
+        <button class="btn jogo-btn" onclick="iniciarJogo('pong')" aria-label="Jogar Pong">Pong</button>
+        <button class="btn jogo-btn" onclick="iniciarJogo('memoria')" aria-label="Jogar Jogo da Memória">Jogo da Memória</button>
+        <button class="btn jogo-btn" onclick="iniciarJogo('tetris')" aria-label="Jogar Tetris">Tetris</button>
+      </div>
+    </section>
 
-  <section id="jogos">
-    <h2>Escolha um Jogo</h2>
-    <button onclick="mostrarJogo('snake')">🐍 Jogo da Cobrinha</button>
-    <button onclick="mostrarJogo('velha')">❌ Jogo da Velha</button>
-    <button onclick="mostrarJogo('adivinha')">🔢 Adivinhação</button>
-    <button onclick="mostrarJogo('memoria')">🧠 Jogo da Memória</button>
-    <button onclick="mostrarJogo('forca')">⚡ Forca</button>
-    <button onclick="mostrarJogo('whack')">🔨 Whack-a-Mole</button>
-    <button onclick="mostrarJogo('pong')">🏓 Pong</button>
-    <button onclick="mostrarJogo('flappy')">🐦 Flappy Bird</button>
-    <button onclick="mostrarJogo('breakout')">🧱 Breakout</button>
-    <button onclick="mostrarJogo('pedrapapel')">🪨📄✂️ Pedra, Papel, Tesoura</button>
+    <!-- Canvas dos Jogos (Snake e Pong) -->
+    <canvas id="gameCanvas" width="400" height="400" style="display: none;" aria-label="Área de jogo"></canvas>
+    
+    <!-- Canvas do Tetris -->
+    <canvas id="tetrisCanvas" width="200" height="400" style="display: none;" aria-label="Área de jogo Tetris"></canvas>
 
-    <!-- Cada jogo será inserido aqui -->
-    <div id="jogo-container"></div>
-  </section>
+    <!-- Container Jogo da Memória -->
+    <section id="memoriaContainer" style="display: none;">
+      <h3 id="faseAtual">Fase 1</h3>
+      <div id="memoriaGrid" class="memoria-grid"></div>
+      <button id="btnProximaFase" class="btn" style="display: none;" aria-label="Ir para próxima fase">Próxima Fase</button>
+      <button id="btnReiniciarMemoria" class="btn" style="display: none;" aria-label="Reiniciar jogo da memória">Reiniciar</button>
+    </section>
 
-  <section id="contato">
-    <h2>Contato</h2>
-    <p>Email: contato@gamezone.com</p>
-  </section>
+    <!-- Botão Reiniciar Geral (para game over) -->
+    <button id="btnReiniciar" class="btn" style="display: none;" aria-label="Reiniciar jogo atual">Reiniciar Jogo</button>
+  </main>
 
-  <footer>
-    <p>© 2025 GameZone. Todos os direitos reservados.</p>
-  </footer>
+  <!-- Controles Mobile -->
+  <div id="mobileControls" class="mobile-controls" style="display: none;">
+    <button class="arrow-btn" data-dir="UP" aria-label="Cima">▲</button>
+    <button class="arrow-btn" data-dir="LEFT" aria-label="Esquerda">◄</button>
+    <button class="arrow-btn" data-dir="DOWN" aria-label="Baixo">▼</button>
+    <button class="arrow-btn" data-dir="RIGHT" aria-label="Direita">►</button>
+  </div>
+
+  <script src="script.js"></script>
 </body>
 </html>
