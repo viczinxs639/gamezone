@@ -1,205 +1,113 @@
-function mostrarJogo(jogo) {
-  const container = document.getElementById('jogo-container');
-  container.innerHTML = ''; // Limpa o container
+// === VARIÁVEIS GERAIS ===
+let jogoAtual = null;
+let requestId;
+let gameOver = false;
 
-  switch (jogo) {
-  case 'snake':
-  container.innerHTML = `
-    <h3>🐍 Jogo da Cobrinha</h3>
-    <canvas id="snakeCanvas" width="400" height="400"></canvas>
-    <p>Pontuação: <span id="score">0</span></p>
-    <button id="resetSnake">🔄 Reiniciar</button>
-    <div id="ranking"></div>
-  `;
-  setTimeout(() => {
-    document.getElementById("resetSnake").addEventListener("click", iniciarCobrinha);
-    iniciarCobrinha();
-  }, 100);
-  break;
+// Elementos DOM
+const telaInicial = document.getElementById("telaInicial");
+const telaJogos = document.getElementById("telaJogos");
+const btnEntrar = document.getElementById("btnEntrar");
+const btnVoltar = document.getElementById("btnVoltar");
+const canvas = document.getElementById("gameCanvas");
+const ctx = canvas.getContext("2d");
+const tetrisCanvas = document.getElementById("tetrisCanvas");
+const tetrisCtx = tetrisCanvas.getContext("2d");
+const memoriaContainer = document.getElementById("memoriaContainer");
+const mobileControls = document.getElementById("mobileControls");
+const btnReiniciar = document.getElementById("btnReiniciar");
 
+// === NAVEGAÇÃO ===
+btnEntrar.onclick = () => {
+  telaInicial.style.display = "none";
+  telaJogos.style.display = "block";
+};
 
-  setTimeout(() => {
-    document.getElementById("resetSnake").addEventListener("click", iniciarCobrinha);
-    iniciarCobrinha();
-  }, 100);
-  break;
+btnVoltar.onclick = resetarTudo();
 
-  `;
-  function iniciarCobrinha() {
-  clearInterval(snakeGameInterval);
-
-  const canvas = document.getElementById("snakeCanvas");
-  const ctx = canvas.getContext("2d");
-
-  const box = 20;
-  const canvasSize = 400;
-  let score = 0;
-  document.getElementById("score").textContent = score;
-
-  const corPrincipal = document.getElementById("snakeColor")?.value || "#00ff88";
-  const dificuldade = parseInt(document.getElementById("dificuldade")?.value || "100");
-
-  let snake = [
-    { x: 9 * box, y: 10 * box },
-    { x: 8 * box, y: 10 * box },
-    { x: 7 * box, y: 10 * box }
-  ];
-
-
-  `;
-  iniciarCobrinha();
-  break;
-      
-
-      break;
-    case 'velha':
-      // Código do Jogo da Velha
-      break;
-    case 'adivinha':
-      // Código do Jogo de Adivinhação
-      break;
-    case 'memoria':
-      // Código do Jogo da Memória
-      break;
-    case 'forca':
-      // Código do Jogo da Forca
-      break;
-    case 'whack':
-      // Código do Whack-a-Mole
-      break;
-    case 'pong':
-      // Código do Pong
-      break;
-    case 'flappy':
-      // Código do Flappy Bird
-      break;
-    case 'breakout':
-      // Código do Breakout
-      break;
-    case 'pedrapapel':
-      // Código do Pedra, Papel, Tesoura
-      break;
-    default:
-      container.innerHTML = '<p>Jogo não encontrado.</p>';
-  }
+function resetarTudo() {
+  return () => {
+    telaInicial.style.display = "block";
+    telaJogos.style.display = "none";
+    canvas.style.display = "none";
+    tetrisCanvas.style.display = "none";
+    memoriaContainer.style.display = "none";
+    mobileControls.style.display = "none";
+    btnReiniciar.style.display = "none";
+    if (requestId) cancelAnimationFrame(requestId);
+    if (window.gameInterval) clearInterval(window.gameInterval);
+    gameOver = false;
+    jogoAtual = null;
+  };
 }
 
-let game; // variável global para o intervalo
+function iniciarJogo(tipo) {
+  jogoAtual = tipo;
+  gameOver = false;
+  telaJogos.style.display = "none";
+  canvas.style.display = (tipo === "snake" || tipo === "pong") ? "block" : "none";
+  tetrisCanvas.style.display = (tipo === "tetris") ? "block" : "none";
+  memoriaContainer.style.display = (tipo === "memoria") ? "block" : "none";
+  mobileControls.style.display = (tipo === "snake" || tipo === "pong" || tipo === "tetris") ? "flex" : "none";
+  btnReiniciar.style.display = "none";
 
-function iniciarCobrinha() {
-  let snakeGameInterval;
+  if (tipo === "snake") iniciarSnake();
+  else if (tipo === "pong") iniciarPong();
+  else if (tipo === "memoria") iniciarMemoria();
+  else if (tipo === "tetris") iniciarTetris();
+}
 
-function iniciarCobrinha() {
-  clearInterval(snakeGameInterval);
-
-let snakeGameInterval; // intervalo global para reset
-
-function iniciarCobrinha() {
-  clearInterval(snakeGameInterval); // limpa jogo anterior
-
-  const canvas = document.getElementById("snakeCanvas");
-  const ctx = canvas.getContext("2d");
-
-  const box = 20;
-  const canvasSize = 400;
-  let score = 0;
-  document.getElementById("score").textContent = score;
-
-  let snake = [
-    { x: 9 * box, y: 10 * box },
-    { x: 8 * box, y: 10 * box },
-    { x: 7 * box, y: 10 * box }
-  ];
-
-  let direction = "RIGHT";
-
-  let food = {
-    x: Math.floor(Math.random() * (canvasSize / box)) * box,
-    y: Math.floor(Math.random() * (canvasSize / box)) * box,
-  };
-
-  document.onkeydown = function (event) {
-    if (event.key === "ArrowLeft" && direction !== "RIGHT") direction = "LEFT";
-    else if (event.key === "ArrowUp" && direction !== "DOWN") direction = "UP";
-    else if (event.key === "ArrowRight" && direction !== "LEFT") direction = "RIGHT";
-    else if (event.key === "ArrowDown" && direction !== "UP") direction = "DOWN";
-  };
-
-  function collision(x, y, array) {
-    return array.some(segment => segment.x === x && segment.y === y);
+// Função para mostrar game over e botão reiniciar
+function mostrarGameOver(mensagem = "Game Over!") {
+  gameOver = true;
+  if (jogoAtual === "tetris") {
+    tetrisCtx.fillStyle = "white";
+    tetrisCtx.font = "30px Arial";
+    tetrisCtx.fillText(mensagem, 20, tetrisCanvas.height / 2);
+  } else {
+    ctx.fillStyle = "white";
+    ctx.font = "30px Arial";
+    ctx.fillText(mensagem, canvas.width / 2 - 70, canvas.height / 2);
   }
-
-  function draw() {
-    ctx.clearRect(0, 0, canvasSize, canvasSize);
-
-    // desenha cobrinha colorida
-    for (let i = 0; i < snake.length; i++) {
-      ctx.fillStyle = `hsl(${(i * 30) % 360}, 100%, 50%)`;
-      ctx.fillRect(snake[i].x, snake[i].y, box, box);
-    }
-
-    // desenha comida
-    ctx.fillStyle = "red";
-    ctx.fillRect(food.x, food.y, box, box);
-
-    let headX = snake[0].x;
-    let headY = snake[0].y;
-
-    if (direction === "LEFT") headX -= box;
-    if (direction === "RIGHT") headX += box;
-    if (direction === "UP") headY -= box;
-    if (direction === "DOWN") headY += box;
-
-    // colisão com bordas e corpo
-    if (
-      headX < 0 || headX >= canvasSize ||
-      headY < 0 || headY >= canvasSize ||
-      collision(headX, headY, snake)
-    ) {
-      clearInterval(snakeGameInterval);
-      alert("☠️ Game Over! Pontuação: " + score);
-      return;
-    }
-
-    if (headX === food.x && headY === food.y) {
-      score++;
-      document.getElementById("score").textContent = score;
-      food = {
-        x: Math.floor(Math.random() * (canvasSize / box)) * box,
-        y: Math.floor(Math.random() * (canvasSize / box)) * box,
-      };
+  btnReiniciar.style.display = "block";
+  btnReiniciar.onclick = () => {
+    if (jogoAtual === "memoria") {
+      document.getElementById("btnReiniciarMemoria").click();
     } else {
-      snake.pop();
+      iniciarJogo(jogoAtual);
     }
-
-    const newHead = { x: headX, y: headY };
-    snake.unshift(newHead);
-  }
-
-  snakeGameInterval = setInterval(draw, 100);
+  };
 }
 
+// === SNAKE ===
+let snake = [], food = {}, dx = 1, dy = 0, score = 0;
 
-  function salvarRanking(pontuacao) {
-  const ranking = JSON.parse(localStorage.getItem("rankingSnake")) || [];
-  const nome = prompt("👤 Digite seu nome para o ranking:");
-  if (!nome) return;
-
-  ranking.push({ nome, pontuacao });
-  ranking.sort((a, b) => b.pontuacao - a.pontuacao);
-  if (ranking.length > 5) ranking.length = 5;
-
-  localStorage.setItem("rankingSnake", JSON.stringify(ranking));
+function iniciarSnake() {
+  snake = [{ x: 10, y: 10 }];
+  food = gerarComida();
+  dx = 1; dy = 0;
+  score = 0;
+  gameOver = false;
+  desenharSnake();
 }
 
-function mostrarRanking() {
-  const container = document.getElementById("jogo-container");
-  const ranking = JSON.parse(localStorage.getItem("rankingSnake")) || [];
+function desenharSnake() {
+  if (gameOver) return;
 
-  let html = `<h3>🏆 Ranking dos Jogadores</h3><ol>`;
-  ranking.forEach(jogador => {
-    html += `<li>${jogador.nome} - ${jogador.pontuacao} pts</li>`;
-  });
-  html += `</ol>`;
-  container.innerHTML += html;
-}
+  ctx.fillStyle = "#222";
+  ctx.fillRect(0, 0, canvas.width, canvas.height);
+
+  ctx.fillStyle = "#f39c12";
+  snake.forEach(s => ctx.fillRect(s.x * 20, s.y * 20, 18, 18));
+
+  ctx.fillStyle = "#e74c3c";
+  ctx.fillRect(food.x * 20, food.y * 20, 18, 18);
+
+  ctx.fillStyle = "white";
+  ctx.font = "16px Arial";
+  ctx.fillText("Pontuação: " + score, 10, 20);
+
+  const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+  if (colisao(head)) {
+    mostrarGameOver();
+    // Som opcional de game over (Web Audio)
+    // new Audio('data:audio/wav;base64,UklGRnoGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQoGAACBhYqFbF1fdJivrJBhNjVgodDbq2EcBj+a2/LDciUFLIHO8tiJNwgZaLvt559NEAxQp+PwtmMcBji
