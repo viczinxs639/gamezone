@@ -22,15 +22,16 @@
       <button id="btnVoltar" class="btn" aria-label="Voltar para a tela inicial">Voltar</button>
       <h2>Escolha um jogo:</h2>
       <div class="botoes-jogos">
-        <button class="btn jogo-btn" onclick="iniciarJogo('snake')" aria-label="Jogar Snake">Snake</button>
-        <button class="btn jogo-btn" onclick="iniciarJogo('pong')" aria-label="Jogar Pong">Pong</button>
-        <button class="btn jogo-btn" onclick="iniciarJogo('memoria')" aria-label="Jogar Jogo da Memória">Jogo da Memória</button>
-        <button class="btn jogo-btn" onclick="iniciarJogo('tetris')" aria-label="Jogar Tetris">Tetris</button>
+        <button class="btn jogo-btn" onclick="iniciarJogo('snake')" aria-label="Jogar Snake">🐍 Snake</button>
+        <button class="btn jogo-btn" onclick="iniciarJogo('pong')" aria-label="Jogar Pong">🎾 Pong</button>
+        <button class="btn jogo-btn" onclick="iniciarJogo('memoria')" aria-label="Jogar Jogo da Memória">🧠 Memória</button>
+        <button class="btn jogo-btn" onclick="iniciarJogo('tetris')" aria-label="Jogar Tetris">🧱 Tetris</button>
       </div>
     </section>
 
     <!-- Canvas dos Jogos (Snake e Pong) -->
     <canvas id="gameCanvas" width="400" height="400" style="display: none;" aria-label="Área de jogo"></canvas>
+    <div id="scoreDisplay" style="display: none; text-align: center; font-size: 18px; color: white; margin: 10px;"></div>
     
     <!-- Canvas do Tetris -->
     <canvas id="tetrisCanvas" width="200" height="400" style="display: none;" aria-label="Área de jogo Tetris"></canvas>
