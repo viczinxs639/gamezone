@@ -1,387 +1,349 @@
 // === VARIÁVEIS GERAIS ===
-let jogo = null;
-let requestId;
+let jogoAtual = null;
+let gameInterval = null;
+let requestId = null;
+let paused = false;
+let audioContext = null; // Para sons simples (inicializa lazy)
 
-const telaInicial = document.getElementById("telaInicial");
-const telaJogos = document.getElementById("telaJogos");
-const btnEntrar = document.getElementById("btnEntrar");
-const btnVoltar = document.getElementById("btnVoltar");
-const canvas = document.getElementById("gameCanvas");
-const ctx = canvas.getContext("2d");
-const tetrisCanvas = document.getElementById("tetrisCanvas");
-const tetrisCtx = tetrisCanvas.getContext("2d");
-const memoriaContainer = document.getElementById("memoriaContainer");
-const mobileControls = document.getElementById("mobileControls");
-
-// === NAVEGAÇÃO ===
-btnEntrar.onclick = () => {
-  telaInicial.style.display = "none";
-  telaJogos.style.display = "block";
+// Elementos DOM (com verificação de existência)
+const elementos = {
+  telaInicial: document.getElementById("telaInicial"),
+  telaJogos: document.getElementById("telaJogos"),
+  btnEntrar: document.getElementById("btnEntrar"),
+  btnVoltar: document.getElementById("btnVoltar"),
+  canvas: document.getElementById("gameCanvas"),
+  ctx: document.getElementById("gameCanvas")?.getContext("2d"),
+  tetrisCanvas: document.getElementById("tetrisCanvas"),
+  tetrisCtx: document.getElementById("tetrisCanvas")?.getContext("2d"),
+  memoriaContainer: document.getElementById("memoriaContainer"),
+  mobileControls: document.getElementById("mobileControls"),
+  btnReiniciar: document.getElementById("btnReiniciar"),
+  scoreDisplay: document.getElementById("scoreDisplay"),
+  memoriaGrid: document.getElementById("memoriaGrid"),
+  faseAtual: document.getElementById("faseAtual"),
+  btnProximaFase: document.getElementById("btnProximaFase"),
+  btnReiniciarMemoria: document.getElementById("btnReiniciarMemoria")
 };
 
-btnVoltar.onclick = () => {
-  telaInicial.style.display = "block";
-  telaJogos.style.display = "none";
-  canvas.style.display = "none";
-  tetrisCanvas.style.display = "none";
-  memoriaContainer.style.display = "none";
-  mobileControls.style.display = "none";
-  cancelAnimationFrame(requestId);
-};
+// Função para tocar som simples (opcional)
+function playSound(frequency = 440, duration = 100) {
+  if (!audioContext) audioContext = new (window.AudioContext || window.webkitAudioContext)();
+  const oscillator = audioContext.createOscillator();
+  const gainNode = audioContext.createGain();
+  oscillator.connect(gainNode);
+  gainNode.connect(audioContext.destination);
+  oscillator.frequency.value = frequency;
+  gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+  gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + duration / 1000);
+  oscillator.start(audioContext.currentTime);
+  oscillator.stop(audioContext.currentTime + duration / 1000);
+}
+
+// === NAVEGAÇÃO (Melhorada com reset completo) ===
+if (elementos.btnEntrar) {
+  elementos.btnEntrar.onclick = () => {
+    if (elementos.telaInicial) elementos.telaInicial.style.display = "none";
+    if (elementos.telaJogos) elementos.telaJogos.style.display = "block";
+  };
+}
+
+if (elementos.btnVoltar) {
+  elementos.btnVoltar.onclick = resetarTudo;
+}
+
+function resetarTudo() {
+  if (elementos.telaInicial) elementos.telaInicial.style.display = "block";
+  if (elementos.telaJogos) elementos.telaJogos.style.display = "none";
+  if (elementos.canvas) elementos.canvas.style.display = "none";
+  if (elementos.tetrisCanvas) elementos.tetrisCanvas.style.display = "none";
+  if (elementos.memoriaContainer) elementos.memoriaContainer.style.display = "none";
+  if (elementos.mobileControls) elementos.mobileControls.style.display = "none";
+  if (elementos.scoreDisplay) elementos.scoreDisplay.style.display = "none";
+  if (elementos.btnReiniciar) elementos.btnReiniciar.style.display = "none";
+  pararJogo();
+  jogoAtual = null;
+  paused = false;
+  if (elementos.ctx) elementos.ctx.clearRect(0, 0, elementos.canvas.width, elementos.canvas.height);
+  if (elementos.tetrisCtx) elementos.tetrisCtx.clearRect(0, 0, elementos.tetrisCanvas.width, elementos.tetrisCanvas.height);
+  if (elementos.memoriaGrid) elementos.memoriaGrid.innerHTML = '';
+}
 
 function iniciarJogo(tipo) {
-  jogo = tipo;
-  telaJogos.style.display = "none";
-  canvas.style.display = tipo === "snake" || tipo === "pong" ? "block" : "none";
-  tetrisCanvas.style.display = tipo === "tetris" ? "block" : "none";
-  memoriaContainer.style.display = tipo === "memoria" ? "block" : "none";
-  mobileControls.style.display = tipo === "snake" || tipo === "pong" ? "flex" : "none";
+  jogoAtual = tipo;
+  paused = false;
+  if (elementos.telaJogos) elementos.telaJogos.style.display = "none";
+  if (elementos.canvas) elementos.canvas.style.display = (tipo === "snake" || tipo === "pong") ? "block" : "none";
+  if (elementos.tetrisCanvas) elementos.tetrisCanvas.style.display = (tipo === "tetris") ? "block" : "none";
+  if (elementos.memoriaContainer) elementos.memoriaContainer.style.display = (tipo === "memoria") ? "block" : "none";
+  if (elementos.mobileControls) elementos.mobileControls.style.display = (tipo === "snake" || tipo === "pong" || tipo === "tetris") ? "flex" : "none";
+  if (elementos.scoreDisplay) elementos.scoreDisplay.style.display = (tipo !== "memoria") ? "block" : "none";
+  if (elementos.btnReiniciar) elementos.btnReiniciar.style.display = "none";
 
-  if (tipo === "snake") iniciarSnake();
-  if (tipo === "pong") iniciarPong();
-  if (tipo === "memoria") iniciarMemoria();
-  if (tipo === "tetris") iniciarTetris();
+  // Inicializa módulo do jogo
+  if (tipo === "snake") moduloSnake.init();
+  else if (tipo === "pong") moduloPong.init();
+  else if (tipo === "memoria") moduloMemoria.init();
+  else if (tipo === "tetris") moduloTetris.init();
+
+  adicionarControlesGlobais();
 }
 
-// === SNAKE ===
-let snake, food, dx, dy, score;
-
-function iniciarSnake() {
-  snake = [{ x: 10, y: 10 }];
-  food = gerarComida();
-  dx = 1;
-  dy = 0;
-  score = 0;
-  desenharSnake();
-}
-
-function desenharSnake() {
-  ctx.fillStyle = "#222";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = "#f39c12";
-  snake.forEach(s => ctx.fillRect(s.x * 20, s.y * 20, 18, 18));
-
-  ctx.fillStyle = "#e74c3c";
-  ctx.fillRect(food.x * 20, food.y * 20, 18, 18);
-
-  ctx.fillStyle = "white";
-  ctx.font = "16px Arial";
-  ctx.fillText("Pontuação: " + score, 10, 20);
-
-  const head = { x: snake[0].x + dx, y: snake[0].y + dy };
-  if (colisao(head)) {
-    ctx.fillStyle = "white";
-    ctx.font = "30px Arial";
-    ctx.fillText("Game Over", canvas.width / 2 - 70, canvas.height / 2);
-    return;
+// Função para parar jogo (limpa loops)
+function pararJogo() {
+  if (gameInterval) {
+    clearInterval(gameInterval);
+    gameInterval = null;
   }
-
-  snake.unshift(head);
-  if (head.x === food.x && head.y === food.y) {
-    score++;
-    food = gerarComida();
-  } else {
-    snake.pop();
+  if (requestId) {
+    cancelAnimationFrame(requestId);
+    requestId = null;
   }
-
-  requestId = requestAnimationFrame(() => setTimeout(desenharSnake, 150));
 }
 
-function gerarComida() {
-  return {
-    x: Math.floor(Math.random() * (canvas.width / 20)),
-    y: Math.floor(Math.random() * (canvas.height / 20))
-  };
-}
-
-function colisao(head) {
-  return (
-    head.x < 0 || head.y < 0 ||
-    head.x >= canvas.width / 20 ||
-    head.y >= canvas.height / 20 ||
-    snake.some(s => s.x === head.x && s.y === head.y)
-  );
-}
-
-document.addEventListener("keydown", e => {
-  if (jogo !== "snake") return;
-  if (e.key === "ArrowUp" && dy === 0) { dx = 0; dy = -1; }
-  if (e.key === "ArrowDown" && dy === 0) { dx = 0; dy = 1; }
-  if (e.key === "ArrowLeft" && dx === 0) { dx = -1; dy = 0; }
-  if (e.key === "ArrowRight" && dx === 0) { dx = 1; dy = 0; }
-});
-
-document.querySelectorAll(".arrow-btn").forEach(btn => {
-  btn.addEventListener("touchstart", () => {
-    const dir = btn.dataset.dir;
-    if (jogo === "snake") {
-      if (dir === "UP" && dy === 0) { dx = 0; dy = -1; }
-      if (dir === "DOWN" && dy === 0) { dx = 0; dy = 1; }
-      if (dir === "LEFT" && dx === 0) { dx = -1; dy = 0; }
-      if (dir === "RIGHT" && dx === 0) { dx = 1; dy = 0; }
-    } else if (jogo === "pong") {
-      if (dir === "UP") jogador.y -= 20;
-      if (dir === "DOWN") jogador.y += 20;
-    }
-  });
-});
-
-// === PONG ===
-let bola, jogador, ia, pontosJogador, pontosIA;
-
-function iniciarPong() {
-  bola = { x: 200, y: 200, dx: 4, dy: 3 };
-  jogador = { y: 150 };
-  ia = { y: 150 };
-  pontosJogador = 0;
-  pontosIA = 0;
-  loopPong();
-}
-
-function loopPong() {
-  ctx.fillStyle = "#000";
-  ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-  ctx.fillStyle = "white";
-  ctx.fillRect(10, jogador.y, 10, 80);
-  ctx.fillRect(380, ia.y, 10, 80);
-
-  ctx.beginPath();
-  ctx.arc(bola.x, bola.y, 8, 0, Math.PI * 2);
-  ctx.fill();
-
-  bola.x += bola.dx;
-  bola.y += bola.dy;
-
-  if (bola.y < 0 || bola.y > canvas.height) bola.dy *= -1;
-
-  if (bola.x < 20 && bola.y > jogador.y && bola.y < jogador.y + 80) bola.dx *= -1;
-  if (bola.x > 370 && bola.y > ia.y && bola.y < ia.y + 80) bola.dx *= -1;
-
-  if (bola.x < 0) { pontosIA++; reiniciarBola(); }
-  if (bola.x > canvas.width) { pontosJogador++; reiniciarBola(); }
-
-  if (Math.random() < 0.6) {
-    if (bola.y < ia.y + 40) ia.y -= 4;
-    else if (bola.y > ia.y + 40) ia.y += 4;
+// Game Over consistente
+function mostrarGameOver(mensagem = "Game Over!", pontos = 0) {
+  paused = true;
+  pararJogo();
+  const highScore = localStorage.getItem(`${jogoAtual}HighScore`) || 0;
+  mensagem += ` | Pontos: ${pontos} | Record: ${highScore}`;
+  if (elementos.ctx && (jogoAtual === "snake" || jogoAtual === "pong")) {
+    elementos.ctx.fillStyle = "rgba(0,0,0,0.7)";
+    elementos.ctx.fillRect(0, 0, elementos.canvas.width, elementos.canvas.height);
+    elementos.ctx.fillStyle = "white";
+    elementos.ctx.font = "bold 24px Arial";
+    elementos.ctx.textAlign = "center";
+    elementos.ctx.fillText(mensagem, elementos.canvas.width / 2, elementos.canvas.height / 2);
+  } else if (elementos.tetrisCtx && jogoAtual === "tetris") {
+    elementos.tetrisCtx.fillStyle = "rgba(0,0,0,0.7)";
+    elementos.tetrisCtx.fillRect(0, 0, elementos.tetrisCanvas.width, elementos.tetrisCanvas.height);
+    elementos.tetrisCtx.fillStyle = "white";
+    elementos.tetrisCtx.font = "bold 20px Arial";
+    elementos.tetrisCtx.textAlign = "center";
+    elementos.tetrisCtx.fillText(mensagem, elementos.tetrisCanvas.width / 2, elementos.tetrisCanvas.height / 2);
   }
-
-  ctx.font = "16px Arial";
-  ctx.fillText(`Jogador: ${pontosJogador} | IA: ${pontosIA}`, 100, 20);
-
-  requestId = requestAnimationFrame(loopPong);
+  if (elementos.btnReiniciar) {
+    elementos.btnReiniciar.style.display = "block";
+    elementos.btnReiniciar.onclick = () => iniciarJogo(jogoAtual);
+  }
+  playSound(200, 300); // Som de game over
 }
 
-function reiniciarBola() {
-  bola.x = canvas.width / 2;
-  bola.y = canvas.height / 2;
-  bola.dx *= -1;
-}
-
-document.addEventListener("keydown", e => {
-  if (jogo !== "pong") return;
-  if (e.key === "ArrowUp") jogador.y -= 20;
-  if (e.key === "ArrowDown") jogador.y += 20;
-});
-
-// === MEMÓRIA ===
-const cartasEmoji = ['🍎','🍌','🍓','🍇','🍉','🍍','🥝','🍑'];
-let cartas, cartaVirada = null, travar = false, acertos = 0, fase = 1;
-
-function iniciarMemoria() {
-  const grid = document.getElementById("memoriaGrid");
-  grid.innerHTML = "";
-  document.getElementById("faseAtual").textContent = "Fase " + fase;
-  document.getElementById("btnIniciarMemoria").style.display = "none";
-  document.getElementById("btnProximaFase").style.display = "none";
-  acertos = 0;
-
-  const totalPares = Math.min(fase + 3, cartasEmoji.length);
-  const escolhidos = cartasEmoji.slice(0, totalPares);
-  cartas = [...escolhidos, ...escolhidos].sort(() => 0.5 - Math.random());
-
-  cartas.forEach((emoji, i) => {
-    const carta = document.createElement("div");
-    carta.className = "carta";
-    carta.dataset.valor = emoji;
-    carta.addEventListener("click", virarCarta);
-    grid.appendChild(carta);
-  });
-}
-
-function virarCarta(e) {
-  if (travar) return;
-  const carta = e.target;
-  if (carta.classList.contains("virada")) return;
-
-  carta.classList.add("virada");
-  carta.textContent = carta.dataset.valor;
-
-  if (!cartaVirada) {
-    cartaVirada = carta;
-  } else {
-    travar = true;
-    if (carta.dataset.valor === cartaVirada.dataset.valor) {
-      acertos++;
-      cartaVirada = null;
-      travar = false;
-      if (acertos === cartas.length / 2) {
-        document.getElementById("btnProximaFase").style.display = "inline-block";
+// Controles Globais (Teclado e Mobile)
+function adicionarControlesGlobais() {
+  // Teclado
+  document.addEventListener('keydown', (e) => {
+    if (!jogoAtual) return;
+    const key = e.key.toLowerCase();
+    if (key === 'p') {
+      paused = !paused;
+      if (!paused && jogoAtual !== "memoria") {
+        // Resume loop do jogo atual
+        if (jogoAtual === "snake") moduloSnake.resume();
+        else if (jogoAtual === "pong") moduloPong.resume();
+        else if (jogoAtual === "tetris") moduloTetris.resume();
       }
-    } else {
-      setTimeout(() => {
-        carta.textContent = "";
-        carta.classList.remove("virada");
-        cartaVirada.textContent = "";
-        cartaVirada.classList.remove("virada");
-        cartaVirada = null;
-        travar = false;
-      }, 800);
+      e.preventDefault();
+      return;
     }
+    let dir = '';
+    if (key === 'arrowleft' || key === 'a') dir = 'LEFT';
+    else if (key === 'arrowup' || key === 'w') dir = 'UP';
+    else if (key === 'arrowright' || key === 'd') dir = 'RIGHT';
+    else if (key === 'arrowdown' || key === 's') dir = 'DOWN';
+    else if (key === ' ' || key === 'arrowup') { // Espaço/UP para rotacionar no Tetris
+      if (jogoAtual === 'tetris') moduloTetris.rotacionar();
+      e.preventDefault();
+      return;
+    }
+    if (dir && !paused) {
+      if (jogoAtual === 'snake') moduloSnake.mudarDirecao(dir);
+      else if (jogoAtual === 'pong') moduloPong.moverPaddle(dir);
+      else if (jogoAtual === 'tetris') moduloTetris.mover(dir);
+    }
+  });
+
+  // Mobile (touchstart + hold simulation with setInterval)
+  if (elementos.mobileControls) {
+    const arrows = elementos.mobileControls.querySelectorAll('.arrow-btn');
+    let touchTimer = null;
+    arrows.forEach(btn => {
+      btn.onpointerdown = (e) => { // Usa pointer para mouse/touch
+        e.preventDefault();
+        const dir = btn.dataset.dir;
+        if (paused) return;
+        // Movimento imediato
+        if (jogoAtual === 'snake') moduloSnake.mudarDirecao(dir);
+        else if (jogoAtual === 'pong') moduloPong.moverPaddle(dir);
+        else if (jogoAtual === 'tetris') moduloTetris.mover(dir);
+        // Repetição para hold (a cada 200ms)
+        touchTimer = setInterval(() => {
+          if (jogoAtual === 'pong') moduloPong.moverPaddle(dir);
+          else if (jogoAtual === 'tetris') moduloTetris.mover(dir);
+        }, 200);
+        if (navigator.vibrate) navigator.vibrate(50); // Vibração
+      };
+      btn.onpointerup = btn.onpointerleave = () => {
+        if (touchTimer) clearInterval(touchTimer);
+      };
+    });
   }
 }
 
-document.getElementById("btnIniciarMemoria").addEventListener("click", iniciarMemoria);
-document.getElementById("btnProximaFase").addEventListener("click", () => {
-  fase++;
-  iniciarMemoria();
-});
+// === MÓDULO SNAKE (Melhorado: FPS fixo, high score, pausa) ===
+const moduloSnake = {
+  snake: [],
+  food: {},
+  dx: 1,
+  dy: 0,
+  score: 0,
+  highScore: 0,
+  boxSize: 20,
+  speed: 150, // ms
 
+  init() {
+    this.highScore = parseInt(localStorage.getItem('snakeHighScore')) || 0;
+    this.reset();
+    if (elementos.scoreDisplay) elementos.scoreDisplay.textContent = `Pontuação: ${this.score} | Record: ${this.highScore}`;
+    gameInterval = setInterval(() => this.update(), this.speed);
+  },
 
-// === TETRIS ===
-const ROWS = 20;
-const COLS = 10;
-const BLOCK_SIZE = 20;
-tetrisCanvas.width = COLS * BLOCK_SIZE;
-tetrisCanvas.height = ROWS * BLOCK_SIZE;
+  reset() {
+    this.snake = [{ x: 10, y: 10 }];
+    this.gerarComida();
+    this.dx = 1; this.dy = 0;
+    this.score = 0;
+  },
 
-let board, currentPiece, gameInterval;
+  gerarComida() {
+    do {
+      this.food = {
+        x: Math.floor(Math.random() * (elementos.canvas.width / this.boxSize)),
+        y: Math.floor(Math.random() * (elementos.canvas.height / this.boxSize))
+      };
+    } while (this.snake.some(s => s.x === this.food.x && s.y === this.food.y));
+  },
 
-const SHAPES = {
-  I: [[1, 1, 1, 1]],
-  O: [[1, 1], [1, 1]],
-  T: [[0, 1, 0], [1, 1, 1]],
-  S: [[0, 1, 1], [1, 1, 0]],
-  Z: [[1, 1, 0], [0, 1, 1]],
-  J: [[1, 0, 0], [1, 1, 1]],
-  L: [[0, 0, 1], [1, 1, 1]]
-};
+  colisao(head) {
+    return head.x < 0 || head.y < 0 || head.x >= elementos.canvas.width / this.boxSize ||
+           head.y >= elementos.canvas.height / this.boxSize ||
+           this.snake.some(s => s.x === head.x && s.y === head.y);
+  },
 
-const COLORS = {
-  I: "cyan", O: "yellow", T: "purple", S: "green", Z: "red", J: "blue", L: "orange"
-};
+  update() {
+    if (paused) return;
+    try {
+      elementos.ctx.fillStyle = "#222";
+      elementos.ctx.fillRect(0, 0, elementos.canvas.width, elementos.canvas.height);
 
-function iniciarTetris() {
-  board = Array.from({ length: ROWS }, () => Array(COLS).fill(""));
-  gerarPeca();
-  clearInterval(gameInterval);
-  gameInterval = setInterval(atualizarTetris, 500);
-  desenharTetris();
-}
+      // Desenhar cobra (gradiente simples)
+      this.snake.forEach((s, i) => {
+        elementos.ctx.fillStyle = i === 0 ? "#4CAF50" : "#81C784"; // Cabeça verde escuro, corpo claro
+        elementos.ctx.fillRect(s.x * this.boxSize, s.y * this.boxSize, this.boxSize - 2, this.boxSize - 2);
+      });
 
-function gerarPeca() {
-  const tipos = Object.keys(SHAPES);
-  const tipo = tipos[Math.floor(Math.random() * tipos.length)];
-  currentPiece = {
-    shape: SHAPES[tipo],
-    color: COLORS[tipo],
-    x: Math.floor(COLS / 2) - 1,
-    y: 0
-  };
-}
+      // Comida
+      elementos.ctx.fillStyle = "#FF5722";
+      elementos.ctx.fillRect(this.food.x * this.boxSize, this.food.y * this.boxSize, this.boxSize - 2, this.boxSize - 2);
 
-function moverPeca(dx, dy) {
-  currentPiece.x += dx;
-  currentPiece.y += dy;
-  if (colide()) {
-    currentPiece.x -= dx;
-    currentPiece.y -= dy;
-    return false;
-  }
-  return true;
-}
+      // Score no canvas + display
+      elementos.ctx.fillStyle = "white";
+      elementos.ctx.font = "bold 16px Arial";
+      elementos.ctx.fillText(`Pontos: ${this.score}`, 10, 25);
+      if (elementos.scoreDisplay) elementos.scoreDisplay.textContent = `Pontuação: ${this.score} | Record: ${this.highScore}`;
 
-function colide() {
-  const { shape, x, y } = currentPiece;
-  for (let r = 0; r < shape.length; r++) {
-    for (let c = 0; c < shape[r].length; c++) {
-      if (shape[r][c]) {
-        let newY = y + r;
-        let newX = x + c;
-        if (newY >= ROWS || newX < 0 || newX >= COLS || board[newY][newX]) {
-          return true;
+      const head = { x: this.snake[0].x + this.dx, y: this.snake[0].y + this.dy };
+      if (this.colisao(head)) {
+        if (this.score > this.highScore) {
+          this.highScore = this.score;
+          localStorage.setItem('snakeHighScore', this.highScore);
         }
+        mostrarGameOver("Game Over!", this.score);
+        return;
       }
+
+      this.snake.unshift(head);
+      if (head.x === this.food.x && head.y === this.food.y) {
+        this.score++;
+        this.gerarComida();
+        playSound(800, 100); // Som de comer
+        // Acelerar a cada 5 pontos
+        if (this.score % 5 === 0) {
+          clearInterval(gameInterval);
+          this.speed = Math.max(50, this.speed - 10);
+          gameInterval = setInterval(() => this.update(), this.speed);
+        }
+      } else {
+        this.snake.pop();
+      }
+    } catch (e) {
+      console.error("Erro no Snake:", e);
     }
+  },
+
+  mudarDirecao(dir) {
+    if (dir === 'UP' && this.dy !== 1) { this.dx = 0; this.dy = -1; }
+    else if (dir === 'DOWN' && this.dy !== -1) { this.dx = 0; this.dy = 1; }
+    else if (dir === 'LEFT' && this.dx !== 1) { this.dx = -1; this.dy = 0; }
+    else if (dir === 'RIGHT' && this.dx !== -1) { this.dx = 1; this.dy = 0; }
+  },
+
+  resume() {
+    if (!gameInterval) gameInterval = setInterval(() => this.update(), this.speed);
   }
-  return false;
-}
+};
 
-function fixarPeca() {
-  const { shape, color, x, y } = currentPiece;
-  shape.forEach((row, r) => {
-    row.forEach((cell, c) => {
-      if (cell) board[y + r][x + c] = color;
-    });
-  });
-}
+// === MÓDULO PONG (Melhorado: IA preditiva, game over em 10 pontos, bounds) ===
+const moduloPong = {
+  bola: { x: 200, y: 200, dx: 4, dy: 3, radius: 8 },
+  jogador: { x: 10, y: 150, width: 10, height: 80 },
+  ia: { x: 380, y: 150, width: 10, height: 80 },
+  pontosJogador: 0,
+  pontosIA: 0,
+  highScore: 0,
+  maxPontos: 10, // Game over em 10 pontos
+  speed: 20, // ms para loop
 
-function limparLinhas() {
-  board = board.filter(row => row.some(cell => !cell));
-  while (board.length < ROWS) {
-    board.unshift(Array(COLS).fill(""));
-  }
-}
+  init() {
+    this.highScore = parseInt(localStorage.getItem('pongHighScore')) || 0;
+    this.reset();
+    if (elementos.scoreDisplay) elementos.scoreDisplay.textContent = `Jogador: ${this.pontosJogador} | IA: ${this.pontosIA} | Record: ${this.highScore}`;
+    gameInterval = setInterval(() => this.update(), this.speed);
+  },
 
-function atualizarTetris() {
-  if (!moverPeca(0, 1)) {
-    fixarPeca();
-    limparLinhas();
-    gerarPeca();
-    if (colide()) {
-      clearInterval(gameInterval);
-      alert("Game Over");
-    }
-  }
-  desenharTetris();
-}
+  reset() {
+    this.bola = { x: 200, y: 200, dx: 4, dy: 3, radius: 8 };
+    this.jogador.y = 150;
+    this.ia.y = 150;
+    this.pontosJogador = 0;
+    this.pontosIA = 0;
+  },
 
-function desenharTetris() {
-  tetrisCtx.clearRect(0, 0, tetrisCanvas.width, tetrisCanvas.height);
-  board.forEach((row, r) => {
-    row.forEach((color, c) => {
-      if (color) desenharBloco(c, r, color);
-    });
-  });
-  const { shape, color, x, y } = currentPiece;
-  shape.forEach((row, r) => {
-    row.forEach((cell, c) => {
-      if (cell) desenharBloco(x + c, y + r, color);
-    });
-  });
-}
+  update() {
+    if (paused) return;
+    try {
+      elementos.ctx.fillStyle = "#000";
+      elementos.ctx.fillRect(0, 0, elementos.canvas.width, elementos.canvas.height);
 
-function desenharBloco(x, y, color) {
-  tetrisCtx.fillStyle = color;
-  tetrisCtx.fillRect(x * BLOCK_SIZE, y * BLOCK_SIZE, BLOCK_SIZE - 1, BLOCK_SIZE - 1);
-}
+      // Desenhar paddles
+      elementos.ctx.fillStyle = "#FFF";
+      elementos.ctx.fillRect(this.jogador.x, this.jogador.y, this.jogador.width, this.jogador.height);
+      elementos.ctx.fillRect(this.ia.x, this.ia.y, this.ia.width, this.ia.height);
 
-document.addEventListener("keydown", e => {
-  if (jogo !== "tetris") return;
-  if (e.key === "ArrowLeft") moverPeca(-1, 0);
-  if (e.key === "ArrowRight") moverPeca(1, 0);
-  if (e.key === "ArrowDown") moverPeca(0, 1);
-});
+      // Bola
+      elementos.ctx.beginPath();
+      elementos.ctx.arc(this.bola.x, this.bola.y, this.bola.radius, 0, Math.PI * 2);
+      elementos.ctx.fill();
 
-document.querySelectorAll(".arrow-btn").forEach(btn => {
-  btn.addEventListener("touchstart", () => {
-    const dir = btn.dataset.dir;
-    if (jogo === "tetris") {
-      if (dir === "LEFT") moverPeca(-1, 0);
-      if (dir === "RIGHT") moverPeca(1, 0);
-      if (dir === "DOWN") moverPeca(0, 1);
-    }
-  });
-});
+      // Mover bola
+      this.bola.x += this.bola.dx;
+      this.bola.y += this.bola.dy;
 
+      // Colisão paredes superior/inferior
+      if (this.bola.y - this.bola.radius < 0 || this.bola.y + this.bola.radius > elementos.canvas.height) {
+        this.bola.dy *= -1;
+        playSound(600, 50);
+      }
+
+      // Colisão jogador
+      if (this.bola.x - this.bola.radius < this.jogador.x + this.jogador.width &&
+          this.bola.y > this.jogador.y && this.bola.y < this.jogador
